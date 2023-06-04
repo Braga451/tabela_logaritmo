@@ -1,4 +1,4 @@
-CC = gcc -Wall -Werror -Wextra -g -O2
+CC = gcc -Wall -pipe -Werror -Wextra -g -O2
 GTKCFLAGS = $(shell pkg-config --cflags gtk4)
 GTKLIBS = $(shell pkg-config --libs gtk4)
 MATHCORELIB = -Ilibs/mathCore/headers

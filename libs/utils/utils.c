@@ -5,22 +5,66 @@
 
 struct interval{
   int sizeofData;
-  int executionTime;
+  long double executionTime;
   long double * data;
 };
 
 struct table_data{
-  char * base;
+  long double base;
   INTERVAL * first;
   INTERVAL * second;
   INTERVAL * third;
 };
+
+long double * getIntervalData(INTERVAL * interval){
+  if(!interval) return NULL;
+  return interval->data;
+}
+
+long double getIntervalExecutionTime(INTERVAL * interval){
+  if(!interval) return -1;
+  return interval->executionTime;
+}
+
+int getIntervalSizeofData(INTERVAL * interval){
+  if(!interval) return -1;
+  return interval->sizeofData;
+}
+
+INTERVAL * getIntervalFromTableData(TABLE_DATA * tableData, int interval){
+  if(!tableData) return NULL;
+  switch(interval){
+    case 1:
+      return tableData->first;
+    case 2:
+      return tableData->second;
+    case 3:
+      return tableData->third;
+    default:
+      return NULL;
+  }
+  return NULL;
+}
 
 INTERVAL * returnInterval(){
   INTERVAL * interval = (INTERVAL *) malloc(sizeof(INTERVAL));
   interval->sizeofData = 0;
   interval->data = NULL;
   return interval;
+}
+
+TABLE_DATA * returnTableData(long double base){
+  TABLE_DATA * tableData = (TABLE_DATA *) malloc(sizeof(TABLE_DATA));
+  tableData->base = base;
+  tableData->first = returnInterval();
+  tableData->second = returnInterval();
+  tableData->third = returnInterval();
+  return tableData;
+}
+
+long double returnTableDataBase(TABLE_DATA * tableData){
+  if(!tableData) return -1;
+  return tableData->base;
 }
 
 void pushInterval(INTERVAL * interval, long double num){
@@ -36,20 +80,55 @@ void pushInterval(INTERVAL * interval, long double num){
   interval->data[interval->sizeofData - 1] = num;
 }
 
+void sumIntervalExecutionTime(INTERVAL * interval, long double time){
+  if(!interval) return;
+  interval->executionTime += time;
+}
+
+void freeInterval(INTERVAL * interval){
+  if(!interval) return;
+  free(interval->data);
+  free(interval);
+}
+
+void freeTableData(TABLE_DATA * tableData){
+  if(!tableData) return;
+  freeInterval(tableData->first);
+  freeInterval(tableData->second);
+  freeInterval(tableData->third);
+  free(tableData);
+}
+
+void printIntervalData(INTERVAL * interval){
+  if(!interval) return;
+  for(int x = 0; x < interval->sizeofData; x++){
+    printf("%Lf ", interval->data[x]);
+  }
+  printf("\nExecution time: %Lf\n", interval->executionTime);
+}
+
+void printTableData(TABLE_DATA * tableData){
+  if(!tableData) return;
+  printIntervalData(tableData->first);
+  printIntervalData(tableData->second);
+  printIntervalData(tableData->third);
+}
+
 void timerFunctionHandler(long double * numToReturn, 
-                          double * executionTime, 
+                          long double * executionTime, 
                           long double * num, 
                           long double * base, 
-                          double (*ln)(long double), 
-                          double (*logN)(long double, long double)){
+                          long double * lnBase,
+                          long double (*ln)(long double), 
+                          long double (*logN)(long double, long double, long double *)){
   clock_t begin = clock(), end;
   if(!base){
     *numToReturn = ln(*num);
     end = clock();
-    *executionTime = (double)(end - begin)/CLOCKS_PER_SEC;
+    *executionTime = (long double)(end - begin)/CLOCKS_PER_SEC;
     return;
   }
-  *numToReturn = logN(*base, *num);
+  *numToReturn = logN(*base, *num, lnBase);
   end = clock();
-  *executionTime = (double)(end - begin)/CLOCKS_PER_SEC;
+  *executionTime = (long double)(end - begin)/CLOCKS_PER_SEC;
 }

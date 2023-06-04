@@ -29,10 +29,13 @@ long double ln(long double num){
     long double * array = arrayLog(num),
     ln2 = newtonMercatorSeries(1.00),
     lnNum = (array[0] * ln2) + newtonMercatorSeries(array[1] - 1);
+    free(array);
     return lnNum;
 }
 
-long double logN(long double base, long double num){ // logBase(num) = ln(num)/ln(base) 
+long double logN(long double base, long double num, long double * lnBase){ // logBase(num) = ln(num)/ln(base)
+    if(base == num) return 1.00;
+    if(lnBase) return ln(num)/(*lnBase);
     return ln(num)/ln(base);
 }
 
