@@ -165,9 +165,12 @@ static void presentLogTable(GtkWidget * widget,
     g_print("%Lf\n", base);
     g_print("%d\n\n", isLn);
 
-    GtkWidget * window = gtk_window_new();
+    GtkWidget * window = gtk_window_new(),
+      * scrolledWindow = gtk_scrolled_window_new();
 
-    gtk_window_set_child(GTK_WINDOW(window), returnTable(returnPopulatedTableData(inferiorLimit, superiorLimit, isLn ? NULL : &base)));
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), returnTable(returnPopulatedTableData(inferiorLimit, superiorLimit, isLn ? NULL : &base)));
+
+    gtk_window_set_child(GTK_WINDOW(window), scrolledWindow);
 
     gtk_window_present(GTK_WINDOW(window));
   }
