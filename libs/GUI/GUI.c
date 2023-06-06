@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <mathCore.h>
 #include <utils.h>
@@ -19,7 +20,8 @@ void populateLimit(INTERVAL * interval,
                    long double * base){
   long double numToReturn = 0.00,
               executionTime = 0.00,
-              lnBase = ln(*base);
+              lnBase = base ? ln(*base) : 0.00;
+  
   for(long double x = inferiorLimit; x < (superiorLimit + iteration); x += iteration){
     timerFunctionHandler(&numToReturn, &executionTime, &x, base, &lnBase, &ln, &logN);
     pushInterval(interval, numToReturn);
@@ -31,11 +33,15 @@ void populateSecondAndThirdIntervalByOne(TABLE_DATA * tableData){
   INTERVAL * first = getIntervalFromTableData(tableData, 1), 
            * second =  getIntervalFromTableData(tableData, 2), 
            * third = getIntervalFromTableData(tableData, 3);
+  
   long double * data = getIntervalData(first);
+  
   int sizeofData = getIntervalSizeofData(first);
+  
   for(int x = 0; x < sizeofData; x += 10){
     pushInterval(second, data[x]);
   }
+
   for(int x = 0; x < sizeofData; x += 20){
     pushInterval(third, data[x]);
   }
@@ -44,21 +50,26 @@ void populateSecondAndThirdIntervalByOne(TABLE_DATA * tableData){
 TABLE_DATA * returnPopulatedTableData(long double inferiorLimit, 
                                       long double superiorLimit, 
                                       long double * base){
-  TABLE_DATA * tableData = returnTableData(*base);
-  
+
+  TABLE_DATA * tableData = returnTableData(base ? *base : 2.7182818284);
+
+  setInferiorLimitForTableData(tableData, inferiorLimit);
+  setSuperiorLimitForTableData(tableData, superiorLimit);
+
   populateLimit(getIntervalFromTableData(tableData, 1), 0.01, inferiorLimit, superiorLimit, base);
-  //populateLimit(getIntervalFromTableData(tableData, 2), 0.1, inferiorLimit, superiorLimit, base);
-  //populateLimit(getIntervalFromTableData(tableData, 3), 0.2, inferiorLimit, superiorLimit, base);
+  populateLimit(getIntervalFromTableData(tableData, 2), 0.1, inferiorLimit, superiorLimit, base);
+  populateLimit(getIntervalFromTableData(tableData, 3), 0.2, inferiorLimit, superiorLimit, base);
   
-  populateSecondAndThirdIntervalByOne(tableData);
+  //populateSecondAndThirdIntervalByOne(tableData);
 
   return tableData;
 }
 
 GtkWidget * returnTableText(char * text){
+
   char * formatedText = (char *) malloc(sizeof(char) * (strlen(text) + 59));
 
-  sprintf(formatedText, "<span font-size=\"24pt\">%s</span>", text);
+  snprintf(formatedText, INT_MAX, "<span font-size=\"24pt\">%s</span>", text);
 
   GtkWidget * header = gtk_label_new(text);
 
@@ -67,21 +78,39 @@ GtkWidget * returnTableText(char * text){
   return header;
 }
 
-void attachColumnToTable(GtkWidget * table, 
-                         char * strLongDoubleBase){
+void attachColumnToTable(GtkWidget * table,
+                          long double * data,
+                          long double base,
+                          long double currentIteration,
+                          long double inferiorLimit,
+                          int sizeofData,
+                          int column){
+  char * textData;
+  int sizeofStringToAlloc;
+  for(int x = 2; x < sizeofData + 2; x++){
+    sizeofStringToAlloc = snprintf(NULL, 0, "log%Lf(%Lf) = %Lf", 
+        base, 
+        (inferiorLimit + ((x - 1) * currentIteration)),
+        data[x - 2]) + 1;
+    
+    textData = (char *) calloc(sizeofStringToAlloc, sizeof(char));
+    
+    snprintf(textData, sizeofStringToAlloc, "log%Lf(%Lf) = %Lf",
+        base,
+        (inferiorLimit + ((x - 2) * currentIteration)),
+        data[x - 2]);
+    
+    gtk_grid_attach(GTK_GRID(table), returnTableText(textData), column, x, 1, 1);
+  }
 
 }
 
-GtkWidget * returnTable(TABLE_DATA * tableData){
-  GtkWidget * table = gtk_grid_new(),
-            * headerFirst = returnTableText("0.01"),
-            * headerSecond = returnTableText("0.1"),
-            * headerThird = returnTableText("0.2");
+void attachColumnsToTable(GtkWidget * table, 
+                         TABLE_DATA * tableData){
   
   INTERVAL * first = getIntervalFromTableData(tableData, 1), 
            * second =  getIntervalFromTableData(tableData, 2), 
            * third = getIntervalFromTableData(tableData, 3);
-  
   
   long double * dataFirst = getIntervalData(first),
               * dataSecond = getIntervalData(second),
@@ -91,11 +120,19 @@ GtkWidget * returnTable(TABLE_DATA * tableData){
       sizeofDataSecond = getIntervalSizeofData(second),
       sizeofDataThird = getIntervalSizeofData(third);
   
-  char * strLongDoubleBase = (char *) calloc(12, sizeof(char));
-       snprintf(strLongDoubleBase, 11, "%Lf", returnTableDataBase(tableData)); // Todo: Discover how to put data in labels
-       * strLongDoubleLogNumber = (char *) malloc(sizeof(char) * 12),
-       * strLongDoubleResultNumber = (char *) malloc(sizeof(char) * 12),
-       * finalResult = (char *) malloc(sizeof(char) * 42);
+  long double inferiorLimit = getInferiorLimitFromTableData(tableData),
+       base = returnTableDataBase(tableData);
+   
+  attachColumnToTable(table, dataFirst, base, 0.01, inferiorLimit, sizeofDataFirst, 1);
+  attachColumnToTable(table, dataSecond, base, 0.1, inferiorLimit, sizeofDataSecond, 2);
+  attachColumnToTable(table, dataThird, base, 0.2, inferiorLimit, sizeofDataThird, 3);
+}
+
+GtkWidget * returnTable(TABLE_DATA * tableData){
+  GtkWidget * table = gtk_grid_new(),
+            * headerFirst = returnTableText("0.01"),
+            * headerSecond = returnTableText("0.1"),
+            * headerThird = returnTableText("0.2");
 
   gtk_grid_set_column_homogeneous ( GTK_GRID(table), true);
   gtk_grid_set_row_homogeneous(GTK_GRID(table), true);
@@ -104,17 +141,7 @@ GtkWidget * returnTable(TABLE_DATA * tableData){
   gtk_grid_attach(GTK_GRID(table), headerSecond, 2, 1, 1, 1);
   gtk_grid_attach(GTK_GRID(table), headerThird, 3, 1, 1, 1);
   
-  for(int x = 2; x < sizeofDataFirst + 2; x++){
-    gtk_grid_attach(GTK_GRID(table), returnTableText(dataFirst[x - 2]), 1, x, 1, 1);
-  }
-  
-  for(int x = 2; x < sizeofDataSecond + 2; x++){
-    gtk_grid_attach(GTK_GRID(table), returnTableText(dataSecond[x - 2]), 2, x, 1, 1);
-  }
-
-  for(int x = 2; x < sizeofDataThird + 2; x++){
-    gtk_grid_attach(GTK_GRID(table), returnTableText(dataThird[x - 2]), 3, x, 1, 1);
-  }
+  attachColumnsToTable(table, tableData);
 
   return table;
 }
@@ -126,11 +153,13 @@ static void presentLogTable(GtkWidget * widget,
       inferiorLimit = gtk_adjustment_get_value(((DATA_ADJUSTMENT *) user_data)->inferiorLimit),
       superiorLimit = gtk_adjustment_get_value(((DATA_ADJUSTMENT *) user_data)->superiorLimit),
       base = gtk_adjustment_get_value(((DATA_ADJUSTMENT *) user_data)->base);
-    if(base == 1){
-      return;
-    }
+    
     gboolean isLn = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(((DATA_ADJUSTMENT *)user_data)->isLn)); 
     
+    if(base == 1 && !isLn){
+      return;
+    }
+
     g_print("%Lf\n", inferiorLimit);
     g_print("%Lf\n", superiorLimit);
     g_print("%Lf\n", base);

@@ -4,6 +4,10 @@
   typedef struct table_data TABLE_DATA;
   INTERVAL * returnInterval();
   TABLE_DATA * returnTableData();
+  long double getInferiorLimitFromTableData(TABLE_DATA * tableData);
+  long double getSuperiorLimitFromTableData(TABLE_DATA * tableData);
+  void setInferiorLimitForTableData(TABLE_DATA * tableData, long double inferiorLimit);
+  void setSuperiorLimitForTableData(TABLE_DATA * tableData, long double superiorLimit);
   long double returnTableDataBase(TABLE_DATA * tableData);
   void printIntervalData(INTERVAL * interval);
   void printTableData(TABLE_DATA * tableData);

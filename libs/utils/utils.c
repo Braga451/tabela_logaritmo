@@ -11,10 +11,32 @@ struct interval{
 
 struct table_data{
   long double base;
+  long double inferiorLimit;
+  long double superiorLimit;
   INTERVAL * first;
   INTERVAL * second;
   INTERVAL * third;
 };
+
+long double getInferiorLimitFromTableData(TABLE_DATA * tableData){
+  if(!tableData) return -1;
+  return tableData->inferiorLimit;
+}
+
+long double getSuperiorLimitFromTableData(TABLE_DATA * tableData){
+  if(!tableData) return -1;
+  return tableData->superiorLimit;
+}
+
+void setInferiorLimitForTableData(TABLE_DATA * tableData, long double inferiorLimit){
+  if(!tableData) return;
+  tableData->inferiorLimit = inferiorLimit;
+}
+
+void setSuperiorLimitForTableData(TABLE_DATA * tableData, long double superiorLimit){
+  if(!tableData) return;
+  tableData->superiorLimit = superiorLimit;
+}
 
 long double * getIntervalData(INTERVAL * interval){
   if(!interval) return NULL;
