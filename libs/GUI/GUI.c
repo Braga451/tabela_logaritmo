@@ -156,19 +156,21 @@ static void presentLogTable(GtkWidget * widget,
     
     gboolean isLn = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(((DATA_ADJUSTMENT *)user_data)->isLn)); 
     
-    if(base == 1 && !isLn){
+    if((base <= 1 && !isLn) || (inferiorLimit > superiorLimit)){
       return;
     }
 
-    g_print("%Lf\n", inferiorLimit);
-    g_print("%Lf\n", superiorLimit);
-    g_print("%Lf\n", base);
-    g_print("%d\n\n", isLn);
+    //g_print("%Lf\n", inferiorLimit);
+    //g_print("%Lf\n", superiorLimit);
+    //g_print("%Lf\n", base);
+    //g_print("%d\n\n", isLn);
+    
+    TABLE_DATA * tableData = returnPopulatedTableData(inferiorLimit, superiorLimit, isLn ? NULL : &base);
 
     GtkWidget * window = gtk_window_new(),
       * scrolledWindow = gtk_scrolled_window_new();
 
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), returnTable(returnPopulatedTableData(inferiorLimit, superiorLimit, isLn ? NULL : &base)));
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), returnTable(tableData));
 
     gtk_window_set_child(GTK_WINDOW(window), scrolledWindow);
 
@@ -210,15 +212,15 @@ static void activate(GtkApplication * app,
     gtk_widget_set_valign (box, GTK_ALIGN_CENTER);
     
     inferiorLimitLabel = gtk_label_new("Limite inferior");
-    inferiorLimitAdjustment =  gtk_adjustment_new (0.00, 1.0, 1000000.00, 1, 0.1, 0.0);
+    inferiorLimitAdjustment =  gtk_adjustment_new (0.01, 0.01, INT_MAX, 1, 0.1, 0.0);
     inferiorLimitInput = gtk_spin_button_new(inferiorLimitAdjustment, 1.0, 4);
     
     superiorLimitLabel = gtk_label_new("Limite superior");
-    superiorLimitAdjustment =  gtk_adjustment_new (0.00, 1.0, 1000000.00, 1, 0.1, 0.0);
+    superiorLimitAdjustment =  gtk_adjustment_new (0.01, 0.01, INT_MAX, 1, 0.1, 0.0);
     superiorLimitInput = gtk_spin_button_new(superiorLimitAdjustment, 1.0, 4);
     
     baseLabel = gtk_label_new("Base");
-    baseAdjustment =  gtk_adjustment_new (0.00, 1.0, 1000000.00, 1, 0.1, 0.0);
+    baseAdjustment =  gtk_adjustment_new (2.00, 2.00, INT_MAX, 1, 0.1, 0.0);
     baseInput = gtk_spin_button_new(baseAdjustment, 1.0, 4);
     
     toggleButtonNaturalLog = gtk_toggle_button_new_with_label("Logaritmo natural");
