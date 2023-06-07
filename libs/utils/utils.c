@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "headers/utils.h"
 
 struct interval{
@@ -153,4 +154,115 @@ void timerFunctionHandler(long double * numToReturn,
   *numToReturn = logN(*base, *num, lnBase);
   end = clock();
   *executionTime = (long double)(end - begin)/CLOCKS_PER_SEC;
+}
+
+int exportCsv(char * fileName,
+             char * headers,
+             int sizeofData,
+             int numberOfColumns,
+             char ** data){
+  
+  FILE * file = fopen(fileName, "a");
+  
+  int charsWritten;
+  
+  if(!file){
+    puts("[-] Error on file writing");
+    return -1;
+  
+  }
+  
+  charsWritten = fprintf(file, "%s\n", headers);
+  
+  if(charsWritten < 0) return -1;
+  
+  for(int x = 0; x < sizeofData; x++){
+    
+    if(x != 0 && x % numberOfColumns == 0){
+      charsWritten = fprintf(file, "\n");
+    
+      if(charsWritten < 0) return -1; 
+    
+    }
+
+    if(strcmp(data[x], "NULL") == 0 || strstr(data[x], "nan")){
+      charsWritten = fprintf(file, ",");
+    
+      if(charsWritten < 0) return -1;
+    }
+    else{
+      charsWritten = fprintf(file, (x + 1) % numberOfColumns == 0 ? "%s" : "%s, ", data[x]);
+    
+      if(charsWritten < 0) return -1;
+    }
+
+  }
+  
+  fclose(file);
+  
+  return 1;
+}
+
+int pushDataToCsv(long double * data, 
+                  int sizeofData, 
+                  int currentIteration,
+                  int * csvFormatedDataSize,
+                  char *** csvFormatedData){
+   
+  (*csvFormatedDataSize)++;
+  char ** tmp = (char **) realloc(*csvFormatedData, sizeof(char *) * (*csvFormatedDataSize)),
+       * strNumeric;
+  
+  int sizeofStrNumeric;
+  
+  if(!tmp){
+    puts("[-] Error in realloc");
+    return -1;
+  }
+  
+  *csvFormatedData = tmp;
+  
+  if(currentIteration > sizeofData){
+     (*csvFormatedData)[*csvFormatedDataSize - 1] = "NULL";
+     return 1;
+  }
+  
+  sizeofStrNumeric = snprintf(NULL, 0, "%Lf", data[currentIteration]) + 1;
+  
+  strNumeric = (char *) malloc(sizeof(char) * sizeofStrNumeric);
+  
+  snprintf(strNumeric, sizeofStrNumeric, "%Lf", data[currentIteration]);
+
+  strNumeric[sizeofStrNumeric - 1] = '\0'; 
+  
+  (*csvFormatedData)[*csvFormatedDataSize - 1] = strNumeric;
+  return 1;
+}
+
+char ** convertTableDataToCsvFormat(TABLE_DATA * tableData, int * sizeofCsvData){
+
+  INTERVAL * first = getIntervalFromTableData(tableData, 1), 
+           * second =  getIntervalFromTableData(tableData, 2), 
+           * third = getIntervalFromTableData(tableData, 3);
+
+  long double * dataFirst = getIntervalData(first),
+              * dataSecond = getIntervalData(second), 
+              * dataThird = getIntervalData(third);
+
+  char ** csvFormatedData = NULL;
+
+  int sizeofDataFirst = getIntervalSizeofData(first), 
+      sizeofDataSecond = getIntervalSizeofData(second),
+      sizeofDataThird = getIntervalSizeofData(third),
+      csvFormatedDataSize = 0;
+
+  for(int x = 0; x < sizeofDataFirst; x++){
+    pushDataToCsv(dataFirst, sizeofDataFirst, x, &csvFormatedDataSize, &csvFormatedData);
+    pushDataToCsv(dataSecond, sizeofDataSecond, x, &csvFormatedDataSize, &csvFormatedData);
+    pushDataToCsv(dataThird, sizeofDataThird, x, &csvFormatedDataSize, &csvFormatedData);
+  }
+  
+  *sizeofCsvData = csvFormatedDataSize;
+
+  return csvFormatedData;
 }

@@ -26,4 +26,10 @@
   int getIntervalSizeofData(INTERVAL * interval);
   void freeInterval(INTERVAL * interval);
   void freeTableData(TABLE_DATA * tableData);
+  int exportCsv(char * fileName,
+             char * headers,
+             int sizeofData,
+             int numberOfColumns,
+             char ** data);
+  char ** convertTableDataToCsvFormat(TABLE_DATA * tableData, int * sizeofCsvData);
 #endif

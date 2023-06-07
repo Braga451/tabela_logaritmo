@@ -105,6 +105,36 @@ void attachColumnToTable(GtkWidget * table,
 
 }
 
+static void exportCsvData(GtkWidget * widget, gpointer userData){
+  if(widget && userData){
+    TABLE_DATA * tableData = ((TABLE_DATA *) userData);
+
+    int sizeofCsvData = 0, result = 0;
+
+    char ** csvData = convertTableDataToCsvFormat(tableData, &sizeofCsvData);
+
+    result = exportCsv("data.csv", "0.01, 0.1, 0.2", sizeofCsvData, 3, csvData);
+    
+   if(result < 0){
+      g_print("[-] Error in file export");
+   }
+  }
+}
+
+void attachExportCsvButton(GtkWidget * table,
+                           TABLE_DATA * tableData){
+
+  INTERVAL * first = getIntervalFromTableData(tableData, 1);
+  
+  int sizeofData = getIntervalSizeofData(first);
+
+  GtkWidget * button = gtk_button_new_with_label("Exportar dados");
+
+  g_signal_connect(button, "clicked", G_CALLBACK (exportCsvData), tableData);
+
+  gtk_grid_attach(GTK_GRID(table), button, 2, sizeofData + 2, 1, 1);
+}
+
 void attachColumnsToTable(GtkWidget * table, 
                          TABLE_DATA * tableData){
   
@@ -142,6 +172,8 @@ GtkWidget * returnTable(TABLE_DATA * tableData){
   gtk_grid_attach(GTK_GRID(table), headerThird, 3, 1, 1, 1);
   
   attachColumnsToTable(table, tableData);
+  
+  attachExportCsvButton(table, tableData);
 
   return table;
 }
