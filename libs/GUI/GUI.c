@@ -121,6 +121,62 @@ static void exportCsvData(GtkWidget * widget, gpointer userData){
   }
 }
 
+static void showExecTimeWindow(GtkWidget * widget, gpointer userData){
+  if(widget && userData){
+    TABLE_DATA * tableData = ((TABLE_DATA *) userData);
+
+    INTERVAL * first = getIntervalFromTableData(tableData, 1),
+      * second = getIntervalFromTableData(tableData, 2),
+      * third = getIntervalFromTableData(tableData, 3);
+    
+    long double firstExecTime = getIntervalExecutionTime(first),
+      secondExecTime = getIntervalExecutionTime(second),
+      thirdExecTime = getIntervalExecutionTime(third),
+      execTimes[3] = {firstExecTime, secondExecTime, thirdExecTime};
+
+    GtkWidget * window = gtk_window_new(),
+           * label,
+           * box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    
+    gtk_widget_set_halign (box, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign (box, GTK_ALIGN_CENTER);
+
+    char * execTimeString = NULL;
+
+    int sizeofExecTimeString = 0;
+
+    for(int x = 0; x < 3; x++){
+      sizeofExecTimeString = snprintf(NULL, 0, "Tempo de execução %d: %.2Lf segundos", x + 1, execTimes[x]);
+      execTimeString = (char *) calloc(sizeofExecTimeString + 1, sizeof(char *));
+      snprintf(execTimeString, sizeofExecTimeString, "Tempo de execução %d: %.2Lf segundos", x + 1, execTimes[x]);
+
+      label = gtk_label_new(execTimeString);
+      
+      gtk_box_append(GTK_BOX(box), label);
+    }
+
+    gtk_window_set_child(GTK_WINDOW(window), box);
+    
+    gtk_window_set_default_size(GTK_WINDOW(window), 250, 250);
+
+    gtk_window_present(GTK_WINDOW(window));
+  }
+}
+
+void attachGetExecutionTimeButton(GtkWidget * table,
+                             TABLE_DATA * tableData){
+  INTERVAL * first = getIntervalFromTableData(tableData, 1);
+  
+  int sizeofData = getIntervalSizeofData(first);
+
+  GtkWidget * button = gtk_button_new_with_label("Mostrar tempo de execução");
+
+  g_signal_connect(button, "clicked", G_CALLBACK (showExecTimeWindow), tableData);
+
+  gtk_grid_attach(GTK_GRID(table), button, 2, sizeofData + 3, 1, 1);
+
+}
+
 void attachExportCsvButton(GtkWidget * table,
                            TABLE_DATA * tableData){
 
@@ -175,6 +231,8 @@ GtkWidget * returnTable(TABLE_DATA * tableData){
   
   attachExportCsvButton(table, tableData);
 
+  attachGetExecutionTimeButton(table, tableData);
+
   return table;
 }
 
@@ -205,6 +263,10 @@ static void presentLogTable(GtkWidget * widget,
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolledWindow), returnTable(tableData));
 
     gtk_window_set_child(GTK_WINDOW(window), scrolledWindow);
+    
+    gtk_window_set_default_size(GTK_WINDOW(window), 650, 650);
+
+    gtk_window_maximize(GTK_WINDOW(window));
 
     gtk_window_present(GTK_WINDOW(window));
   }
